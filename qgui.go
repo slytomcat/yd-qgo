@@ -204,8 +204,6 @@ func main() {
 						mSize2.SetText(Msg.Sprintf("Free: %s Trash: %s", yds.Free, yds.Trash))
 						if yds.ChLast { // last synchronized list changed
 							smLast := ui.NewMenu()
-							mLast.SetMenu(smLast)
-
 							for _, p := range yds.Last {
 								short, full := shortName(p, 40), filepath.Join(YD.Path, p)
 								action := ui.NewActionWithTextParent(short, smLast)
@@ -217,6 +215,7 @@ func main() {
 								smLast.AddAction(action)
 							}
 							mLast.SetDisabled(len(yds.Last) == 0)
+							mLast.SetMenu(smLast)
 							llog.Debug("Last synchronized updated L", len(yds.Last))
 						}
 						if yds.Stat != yds.Prev { // status changed
@@ -270,6 +269,7 @@ func main() {
 								}
 							}
 						}
+						systray.Show()
 					})
 					llog.Debug("Change handled")
 				case <-tick.C: //  timer event
