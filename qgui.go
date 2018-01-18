@@ -47,27 +47,6 @@ var (
 	iconError *ui.QIcon
 )
 
-func setTheme(appHome, theme string) {
-
-	themePath := path.Join(appHome, theme)
-
-	iconBusy = [5]*ui.QIcon{
-		ui.NewIconWithFilename(path.Join(themePath, "busy1.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy2.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy3.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy4.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy5.png")),
-	}
-
-	iconError = ui.NewIconWithFilename(path.Join(themePath, "error.png"))
-	iconIdle = ui.NewIconWithFilename(path.Join(themePath, "idle.png"))
-	iconPause = ui.NewIconWithFilename(path.Join(themePath, "pause.png"))
-}
-
-func notifySend(t *ui.QSystemTrayIcon, title, message string) {
-	t.ShowMessage(title, message, ui.QSystemTrayIcon_Information, 2000)
-}
-
 func main() {
 	ui.Run(func() {
 		C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
@@ -142,6 +121,8 @@ func main() {
 		menu.AddAction(mSize2)
 		menu.AddSeparator()
 		mLast := ui.NewActionWithTextParent("Last synchronized", menu)
+		smLast := ui.NewMenu()
+		mLast.SetMenu(smLast)
 		mLast.SetDisabled(true)
 		menu.AddAction(mLast)
 		menu.AddSeparator()
@@ -203,7 +184,7 @@ func main() {
 						mSize1.SetText(Msg.Sprintf("Used: %s/%s", yds.Used, yds.Total))
 						mSize2.SetText(Msg.Sprintf("Free: %s Trash: %s", yds.Free, yds.Trash))
 						if yds.ChLast { // last synchronized list changed
-							smLast := ui.NewMenu()
+							smLast.Clear()
 							for _, p := range yds.Last {
 								short, full := shortName(p, 40), filepath.Join(YD.Path, p)
 								action := ui.NewActionWithTextParent(short, smLast)
@@ -231,7 +212,7 @@ func main() {
 							default:
 								systray.SetIcon(iconError)
 							}
-							// handle Start/Stop menu title
+							// handle "Start"/"Stop" menu title and "Show daemon output" availability 
 							if yds.Stat == "none" {
 								mStartStop.SetText("Start")
 								mStartStop.SetDisabled(false)
@@ -284,6 +265,24 @@ func main() {
 		}()
 
 	})
+}
+
+func setTheme(appHome, theme string) {
+	themePath := path.Join(appHome, theme)
+	iconBusy = [5]*ui.QIcon{
+		ui.NewIconWithFilename(path.Join(themePath, "busy1.png")),
+		ui.NewIconWithFilename(path.Join(themePath, "busy2.png")),
+		ui.NewIconWithFilename(path.Join(themePath, "busy3.png")),
+		ui.NewIconWithFilename(path.Join(themePath, "busy4.png")),
+		ui.NewIconWithFilename(path.Join(themePath, "busy5.png")),
+	}
+	iconError = ui.NewIconWithFilename(path.Join(themePath, "error.png"))
+	iconIdle = ui.NewIconWithFilename(path.Join(themePath, "idle.png"))
+	iconPause = ui.NewIconWithFilename(path.Join(themePath, "pause.png"))
+}
+
+func notifySend(t *ui.QSystemTrayIcon, title, message string) {
+	t.ShowMessage(title, message, ui.QSystemTrayIcon_Information, 2000)
 }
 
 // shortName returns the shorten version of its first parameter. The second parameter specifies
