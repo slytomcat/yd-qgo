@@ -1,5 +1,20 @@
 package main
 
+/*
+#include <stdio.h>
+#include <signal.h>
+#include <string.h>
+
+void savesigchld() {
+	struct sigaction action;
+	struct sigaction old_action;
+	sigaction(SIGCHLD, NULL, &action);
+	action.sa_flags = action.sa_flags | SA_ONSTACK;
+	sigaction(SIGCHLD, &action, &old_action);
+}
+*/
+import "C"
+
 import (
 	"flag"
 	"fmt"
@@ -55,6 +70,7 @@ func notifySend(t *ui.QSystemTrayIcon, title, message string) {
 
 func main() {
 	ui.Run(func() {
+		C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
 		var debug bool
 		flag.BoolVar(&debug, "debug", false, "Allow debugging messages to be sent to stderr")
 		flag.StringVar(&AppConfigFile, "config", "~/.config/yd-qgo/default.cfg", "Path to the indicator configuration file")
@@ -107,7 +123,7 @@ func main() {
 		YD := ydisk.NewYDisk(AppCfg["Conf"].(string))
 		// Start daemon if it is configured
 		if AppCfg["StartDaemon"].(bool) {
-			go YD.Start()
+			YD.Start()
 		}
 		// Initialize icon theme
 		setTheme("/usr/share/yd-qgo/icons", AppCfg["Theme"].(string))
@@ -136,7 +152,7 @@ func main() {
 			case "Start": // start
 				go YD.Start()
 			case "Stop": // stop
-				go YD.Start()
+				go YD.Stop()
 			}
 		})
 		menu.AddAction(mStartStop)
@@ -219,8 +235,12 @@ func main() {
 							// handle Start/Stop menu title
 							if yds.Stat == "none" {
 								mStartStop.SetText("Start")
+								mStartStop.SetDisabled(false)
+								mOutput.SetDisabled(true)
 							} else if mStartStop.Text() != "Stop" {
 								mStartStop.SetText("Stop")
+								mStartStop.SetDisabled(false)
+								mOutput.SetDisabled(false)
 							}
 							// handle notifications
 							if AppCfg["Notifications"].(bool) {
