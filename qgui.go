@@ -33,14 +33,22 @@ import (
 	"golang.org/x/text/message"
 )
 
+const about = `yd-qgo is the panel indicator for Yandex.Disk daemon.
+
+      Version: Betta 0.2
+
+Copyleft 2017-2018 Sly_tom_cat (slytomcat@mail.ru)
+
+	  License: GPL v.3
+
+`
+
 var (
 	// AppConfigFile stores the application configuration file path
 	AppConfigFile string
 	// Msg is the Localozation printer
 	Msg *message.Printer
-)
 
-var (
 	iconBusy  [5]*ui.QIcon
 	iconIdle  *ui.QIcon
 	iconPause *ui.QIcon
@@ -142,11 +150,21 @@ func main() {
 		mOutput.OnTriggered(func() { notifySend(systray, "Yandex.Disk daemon output", YD.Output()) })
 		menu.AddAction(mOutput)
 		mPath := ui.NewActionWithTextParent("Open: "+YD.Path, menu)
-		mPath.OnTriggered(func() { ui.Async(func() { xdgOpen(YD.Path) }) })
+		mPath.OnTriggered(func() { xdgOpen(YD.Path) })
 		menu.AddAction(mPath)
 		mSite := ui.NewActionWithTextParent("Open YandexDisk in browser", menu)
 		mSite.OnTriggered(func() { xdgOpen("https://disk.yandex.com") })
 		menu.AddAction(mSite)
+		menu.AddSeparator()
+		mHelp := ui.NewActionWithTextParent("Help", menu)
+		mHelp.OnTriggered(func() { xdgOpen("https://github.com/slytomcat/YD.go/wiki/FAQ&SUPPORT") })
+		menu.AddAction(mHelp)
+		mAbout := ui.NewActionWithTextParent("About", menu)
+		mAbout.OnTriggered(func() { notifySend(systray, "About", about) })
+		menu.AddAction(mAbout)
+		mDon := ui.NewActionWithTextParent("Donations", menu)
+		mDon.OnTriggered(func() { xdgOpen("https://github.com/slytomcat/yd-go/wiki/Donats") })
+		menu.AddAction(mDon)
 		menu.AddSeparator()
 		quit := ui.NewActionWithTextParent("Quit", menu)
 		quit.OnTriggered(func() {
