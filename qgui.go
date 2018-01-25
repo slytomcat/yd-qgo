@@ -20,14 +20,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
-	"os/user"
 	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/slytomcat/confJSON"
 	"github.com/slytomcat/llog"
+	"github.com/slytomcat/yd-go/tools"
 	"github.com/slytomcat/yd-go/ydisk"
 	"github.com/visualfc/goqt/ui"
 	"golang.org/x/text/message"
@@ -81,25 +80,25 @@ func main() {
 		// Prepare the application configuration
 		// Make default app configuration values
 		AppCfg := map[string]interface{}{
-			"Conf":          expandHome("~/.config/yandex-disk/config.cfg"), // path to daemon config file
-			"Theme":         "dark",                                         // icons theme name
-			"Notifications": true,                                           // display desktop notification
-			"StartDaemon":   true,                                           // start daemon on app start
-			"StopDaemon":    false,                                          // stop daemon on app closure
+			"Conf":          tools.ExpandHome("~/.config/yandex-disk/config.cfg"), // path to daemon config file
+			"Theme":         "dark",                                               // icons theme name
+			"Notifications": true,                                                 // display desktop notification
+			"StartDaemon":   true,                                                 // start daemon on app start
+			"StopDaemon":    false,                                                // stop daemon on app closure
 		}
 		// Check that app configuration file path exists
-		AppConfigHome := expandHome("~/.config/yd-qgo")
-		if notExists(AppConfigHome) {
+		AppConfigHome := tools.ExpandHome("~/.config/yd-qgo")
+		if tools.NotExists(AppConfigHome) {
 			err := os.MkdirAll(AppConfigHome, 0766)
 			if err != nil {
 				llog.Critical("Can't create application configuration path:", err)
 			}
 		}
 		// Path to app configuration file path always comes from command-line flag
-		AppConfigFile = expandHome(AppConfigFile)
+		AppConfigFile = tools.ExpandHome(AppConfigFile)
 		llog.Debug("Configuration:", AppConfigFile)
 		// Check that app configuration file exists
-		if notExists(AppConfigFile) {
+		if tools.NotExists(AppConfigFile) {
 			//Create and save new configuration file with default values
 			confJSON.Save(AppConfigFile, AppCfg)
 		} else {
@@ -150,20 +149,20 @@ func main() {
 		mOutput.OnTriggered(func() { notifySend(systray, "Yandex.Disk daemon output", YD.Output()) })
 		menu.AddAction(mOutput)
 		mPath := ui.NewActionWithTextParent("Open: "+YD.Path, menu)
-		mPath.OnTriggered(func() { xdgOpen(YD.Path) })
+		mPath.OnTriggered(func() { tools.XdgOpen(YD.Path) })
 		menu.AddAction(mPath)
 		mSite := ui.NewActionWithTextParent("Open YandexDisk in browser", menu)
-		mSite.OnTriggered(func() { xdgOpen("https://disk.yandex.com") })
+		mSite.OnTriggered(func() { tools.XdgOpen("https://disk.yandex.com") })
 		menu.AddAction(mSite)
 		menu.AddSeparator()
 		mHelp := ui.NewActionWithTextParent("Help", menu)
-		mHelp.OnTriggered(func() { xdgOpen("https://github.com/slytomcat/YD.go/wiki/FAQ&SUPPORT") })
+		mHelp.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/YD.go/wiki/FAQ&SUPPORT") })
 		menu.AddAction(mHelp)
 		mAbout := ui.NewActionWithTextParent("About", menu)
 		mAbout.OnTriggered(func() { notifySend(systray, "About", about) })
 		menu.AddAction(mAbout)
 		mDon := ui.NewActionWithTextParent("Donations", menu)
-		mDon.OnTriggered(func() { xdgOpen("https://github.com/slytomcat/yd-go/wiki/Donats") })
+		mDon.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/yd-go/wiki/Donats") })
 		menu.AddAction(mDon)
 		menu.AddSeparator()
 		quit := ui.NewActionWithTextParent("Quit", menu)
@@ -198,18 +197,18 @@ func main() {
 					currentStatus = yds.Stat
 					ui.Async(func() {
 						mStatus.SetText(Msg.Sprint("Status: ") + Msg.Sprint(yds.Stat) + " " + yds.Prog +
-							yds.Err + " " + shortName(yds.ErrP, 30))
+							yds.Err + " " + tools.ShortName(yds.ErrP, 30))
 						mSize1.SetText(Msg.Sprintf("Used: %s/%s", yds.Used, yds.Total))
 						mSize2.SetText(Msg.Sprintf("Free: %s Trash: %s", yds.Free, yds.Trash))
 						if yds.ChLast { // last synchronized list changed
 							smLast.Clear()
 							for _, p := range yds.Last {
-								short, full := shortName(p, 40), filepath.Join(YD.Path, p)
+								short, full := tools.ShortName(p, 40), filepath.Join(YD.Path, p)
 								action := ui.NewActionWithTextParent(short, smLast)
-								if notExists(full) {
+								if tools.NotExists(full) {
 									action.SetDisabled(true)
 								} else {
-									action.OnTriggered(func() { xdgOpen(full) })
+									action.OnTriggered(func() { tools.XdgOpen(full) })
 								}
 								smLast.AddAction(action)
 							}
@@ -230,7 +229,7 @@ func main() {
 							default:
 								systray.SetIcon(iconError)
 							}
-							// handle "Start"/"Stop" menu title and "Show daemon output" availability 
+							// handle "Start"/"Stop" menu title and "Show daemon output" availability
 							if yds.Stat == "none" {
 								mStartStop.SetText("Start")
 								mStartStop.SetDisabled(false)
@@ -301,47 +300,4 @@ func setTheme(appHome, theme string) {
 
 func notifySend(t *ui.QSystemTrayIcon, title, message string) {
 	t.ShowMessage(title, message, ui.QSystemTrayIcon_Information, 2000)
-}
-
-// shortName returns the shorten version of its first parameter. The second parameter specifies
-// the maximum number of symbols (runes) in returned string.
-func shortName(s string, l int) string {
-	r := []rune(s)
-	lr := len(r)
-	if lr > l {
-		b := (l - 3) / 2
-		e := b
-		if b+e+3 < l {
-			e++
-		}
-		return string(r[:b]) + "..." + string(r[lr-e:])
-	}
-	return s
-}
-
-// notExists returns true when specified path does not exists
-func notExists(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		return os.IsNotExist(err)
-	}
-	return false
-}
-
-func expandHome(path string) string {
-	if len(path) == 0 || path[0] != '~' {
-		return path
-	}
-	usr, err := user.Current()
-	if err != nil {
-		llog.Critical("Can't get current user profile:", err)
-	}
-	return filepath.Join(usr.HomeDir, path[1:])
-}
-
-func xdgOpen(uri string) {
-	err := exec.Command("xdg-open", uri).Start()
-	if err != nil {
-		llog.Error(err)
-	}
 }

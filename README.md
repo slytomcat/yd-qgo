@@ -33,7 +33,20 @@ Change current directoru to the progect folder
 ## Build 
 For building this prject the additional packages are requered:
 
---- UNDER CONSTRUCTION ---
+Install qt-sdk (Qt 4.8)
+
+    sudo apt-get install qt-sdk
+
+Get package github.com/visualfc/goqt
+
+    go get github.com/visualfc/goqt
+    
+Follow the package instructions (https://github.com/visualfc/goqt/blob/master/doc/install.md) to install the pacage
+
+After goqt package installation build the indicator
+
+    cd yd-qgo/
+    ./build.bash
 
 ## Installation
 Run install.bash script with root previlegies for installation.
