@@ -3,6 +3,8 @@
 
 It's just reface (Qt is used instead of GTK+) of yd-go. If you are interested in GTK+ version, visit: https://github.com/slytomcat/yd-go
 
+Russian wiki: https://github.com/slytomcat/yd-go/wiki
+
 I've made it as it is rather well-known task for me (I've made the similar indicator in YD-tools project in Python language: https://github.com/slytomcat/yandex-disk-indicator).
 
 GUI (System tray icon) shows the current synchronization status by different icons. During synchronization the icon is animated. 
