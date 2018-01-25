@@ -34,7 +34,7 @@ import (
 
 const about = `yd-qgo is the panel indicator for Yandex.Disk daemon.
 
-      Version: Betta 0.2
+      Version: 0.3
 
 Copyleft 2017-2018 Sly_tom_cat (slytomcat@mail.ru)
 
