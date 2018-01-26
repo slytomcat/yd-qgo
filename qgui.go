@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/slytomcat/confJSON"
@@ -134,12 +135,11 @@ func main() {
 		menu.AddAction(mLast)
 		menu.AddSeparator()
 		mStartStop := ui.NewActionWithTextParent("", menu)
-		mStartStop.SetDisabled(true)
 		mStartStop.OnTriggered(func() {
-			switch mStartStop.Text() {
-			case "Start": // start
+			switch {
+			case strings.HasPrefix(mStartStop.Text(), "\u200B"):
 				go YD.Start()
-			case "Stop": // stop
+			case strings.HasPrefix(mStartStop.Text(), "\u2060"):
 				go YD.Stop()
 			}
 		})
@@ -213,7 +213,6 @@ func main() {
 								smLast.AddAction(action)
 							}
 							mLast.SetDisabled(len(yds.Last) == 0)
-							mLast.SetMenu(smLast)
 							llog.Debug("Last synchronized updated L", len(yds.Last))
 						}
 						if yds.Stat != yds.Prev { // status changed
@@ -223,7 +222,9 @@ func main() {
 								systray.SetIcon(iconIdle)
 							case "busy", "index":
 								systray.SetIcon(iconBusy[currentIcon])
-								tick.Reset(333 * time.Millisecond)
+								if yds.Prev != "busy" && yds.Prev != "index" {
+									tick.Reset(333 * time.Millisecond)
+								}
 							case "none", "paused":
 								systray.SetIcon(iconPause)
 							default:
@@ -231,12 +232,10 @@ func main() {
 							}
 							// handle "Start"/"Stop" menu title and "Show daemon output" availability
 							if yds.Stat == "none" {
-								mStartStop.SetText("Start")
-								mStartStop.SetDisabled(false)
+								mStartStop.SetText("\u200B" + Msg.Sprint("Start daemon"))
 								mOutput.SetDisabled(true)
-							} else if mStartStop.Text() != "Stop" {
-								mStartStop.SetText("Stop")
-								mStartStop.SetDisabled(false)
+							} else if yds.Prev == "none" || yds.Prev == "unknown" {
+								mStartStop.SetText("\u2060" + Msg.Sprint("Stop daemon"))
 								mOutput.SetDisabled(false)
 							}
 							// handle notifications
