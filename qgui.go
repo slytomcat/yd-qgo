@@ -56,234 +56,234 @@ var (
 )
 
 func main() {
-	ui.Run(func() {
-		C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
-		var debug bool
-		flag.BoolVar(&debug, "debug", false, "Allow debugging messages to be sent to stderr")
-		flag.StringVar(&AppConfigFile, "config", "~/.config/yd-qgo/default.cfg", "Path to the indicator configuration file")
-		flag.Usage = func() {
-			fmt.Fprintf(os.Stderr, "Usage:\n\n\t\tyd-qgo [-debug] [-config=<Path to indicator config>]\n\n")
-			flag.PrintDefaults()
-		}
-		flag.Parse()
-		// Initialize logging facility
-		llog.SetOutput(os.Stderr)
-		llog.SetPrefix("")
-		llog.SetFlags(log.Lshortfile | log.Lmicroseconds)
-		if debug {
-			llog.SetLevel(llog.DEBUG)
-			llog.Info("Debugging enabled")
-		} else {
-			llog.SetLevel(-1)
-		}
-		// Initialize translations
-		Msg = message.NewPrinter(message.MatchLanguage("ru"))
-		// Prepare the application configuration
-		// Make default app configuration values
-		AppCfg := map[string]interface{}{
-			"Conf":          tools.ExpandHome("~/.config/yandex-disk/config.cfg"), // path to daemon config file
-			"Theme":         "dark",                                               // icons theme name
-			"Notifications": true,                                                 // display desktop notification
-			"StartDaemon":   true,                                                 // start daemon on app start
-			"StopDaemon":    false,                                                // stop daemon on app closure
-		}
-		// Check that app configuration file path exists
-		AppConfigHome := tools.ExpandHome("~/.config/yd-qgo")
-		if tools.NotExists(AppConfigHome) {
-			err := os.MkdirAll(AppConfigHome, 0766)
-			if err != nil {
-				llog.Critical("Can't create application configuration path:", err)
-			}
-		}
-		// Path to app configuration file path always comes from command-line flag
-		AppConfigFile = tools.ExpandHome(AppConfigFile)
-		llog.Debug("Configuration:", AppConfigFile)
-		// Check that app configuration file exists
-		if tools.NotExists(AppConfigFile) {
-			//Create and save new configuration file with default values
-			confJSON.Save(AppConfigFile, AppCfg)
-		} else {
-			// Read app configuration file
-			confJSON.Load(AppConfigFile, &AppCfg)
-		}
-		// Create new ydisk interface
-		YD, err := ydisk.NewYDisk(AppCfg["Conf"].(string))
+	ui.Run(onStart)
+}
+
+func onStart() {
+	C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "Allow debugging messages to be sent to stderr")
+	flag.StringVar(&AppConfigFile, "config", "~/.config/yd-qgo/default.cfg", "Path to the indicator configuration file")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage:\n\n\t\tyd-qgo [-debug] [-config=<Path to indicator config>]\n\n")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+	// Initialize logging facility
+	llog.SetOutput(os.Stderr)
+	llog.SetPrefix("")
+	llog.SetFlags(log.Lshortfile | log.Lmicroseconds)
+	if debug {
+		llog.SetLevel(llog.DEBUG)
+		llog.Info("Debugging enabled")
+	} else {
+		llog.SetLevel(-1)
+	}
+	// Initialize translations
+	Msg = message.NewPrinter(message.MatchLanguage("ru"))
+	// Prepare the application configuration
+	// Make default app configuration values
+	AppCfg := map[string]interface{}{
+		"Conf":          tools.ExpandHome("~/.config/yandex-disk/config.cfg"), // path to daemon config file
+		"Theme":         "dark",                                               // icons theme name
+		"Notifications": true,                                                 // display desktop notification
+		"StartDaemon":   true,                                                 // start daemon on app start
+		"StopDaemon":    false,                                                // stop daemon on app closure
+	}
+	// Check that app configuration file path exists
+	AppConfigHome := tools.ExpandHome("~/.config/yd-qgo")
+	if tools.NotExists(AppConfigHome) {
+		err := os.MkdirAll(AppConfigHome, 0766)
 		if err != nil {
-			llog.Critical("Fatal error. Exit.")
+			llog.Critical("Can't create application configuration path:", err)
 		}
-		// Start daemon if it is configured
-		if AppCfg["StartDaemon"].(bool) {
-			YD.Start()
+	}
+	// Path to app configuration file path always comes from command-line flag
+	AppConfigFile = tools.ExpandHome(AppConfigFile)
+	llog.Debug("Configuration:", AppConfigFile)
+	// Check that app configuration file exists
+	if tools.NotExists(AppConfigFile) {
+		//Create and save new configuration file with default values
+		confJSON.Save(AppConfigFile, AppCfg)
+	} else {
+		// Read app configuration file
+		confJSON.Load(AppConfigFile, &AppCfg)
+	}
+	// Create new ydisk interface
+	YD, err := ydisk.NewYDisk(AppCfg["Conf"].(string))
+	if err != nil {
+		llog.Critical("Fatal error. Exit.")
+	}
+	// Start daemon if it is configured
+	if AppCfg["StartDaemon"].(bool) {
+		YD.Start()
+	}
+	// Initialize icon theme
+	setTheme("/usr/share/yd-qgo/icons", AppCfg["Theme"].(string))
+	systray := ui.NewSystemTrayIcon()
+	systray.SetIcon(iconPause)
+	menu := ui.NewMenu()
+
+	mStatus := ui.NewActionWithTextParent("Status: unknown", menu)
+	mStatus.SetDisabled(true)
+	menu.AddAction(mStatus)
+	mSize1 := ui.NewActionWithTextParent("", menu)
+	mSize1.SetDisabled(true)
+	menu.AddAction(mSize1)
+	mSize2 := ui.NewActionWithTextParent("", menu)
+	mSize2.SetDisabled(true)
+	menu.AddAction(mSize2)
+	menu.AddSeparator()
+	mLast := ui.NewActionWithTextParent("Last synchronized", menu)
+	smLast := ui.NewMenu()
+	mLast.SetMenu(smLast)
+	mLast.SetDisabled(true)
+	menu.AddAction(mLast)
+	menu.AddSeparator()
+	mStartStop := ui.NewActionWithTextParent("", menu)
+	mStartStop.OnTriggered(func() {
+		switch {
+		case strings.HasPrefix(mStartStop.Text(), "\u200B"):
+			go YD.Start()
+		case strings.HasPrefix(mStartStop.Text(), "\u2060"):
+			go YD.Stop()
 		}
-		// Initialize icon theme
-		setTheme("/usr/share/yd-qgo/icons", AppCfg["Theme"].(string))
-		systray := ui.NewSystemTrayIcon()
-		systray.SetIcon(iconPause)
-		menu := ui.NewMenu()
+	})
+	menu.AddAction(mStartStop)
+	menu.AddSeparator()
+	mOutput := ui.NewActionWithTextParent("Show daemon output", menu)
+	mOutput.OnTriggered(func() { notifySend(systray, "Yandex.Disk daemon output", YD.Output()) })
+	menu.AddAction(mOutput)
+	mPath := ui.NewActionWithTextParent("Open: "+YD.Path, menu)
+	mPath.OnTriggered(func() { tools.XdgOpen(YD.Path) })
+	menu.AddAction(mPath)
+	mSite := ui.NewActionWithTextParent("Open YandexDisk in browser", menu)
+	mSite.OnTriggered(func() { tools.XdgOpen("https://disk.yandex.com") })
+	menu.AddAction(mSite)
+	menu.AddSeparator()
+	mHelp := ui.NewActionWithTextParent("Help", menu)
+	mHelp.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/YD.go/wiki/FAQ&SUPPORT") })
+	menu.AddAction(mHelp)
+	mAbout := ui.NewActionWithTextParent("About", menu)
+	mAbout.OnTriggered(func() { notifySend(systray, "About", about) })
+	menu.AddAction(mAbout)
+	mDon := ui.NewActionWithTextParent("Donations", menu)
+	mDon.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/yd-go/wiki/Donats") })
+	menu.AddAction(mDon)
+	menu.AddSeparator()
+	quit := ui.NewActionWithTextParent("Quit", menu)
+	quit.OnTriggered(func() {
+		if AppCfg["StopDaemon"].(bool) {
+			YD.Stop()
+		}
+		YD.Close() // it closes Changes channel
+		ui.QApplicationQuit()
+	})
+	menu.AddAction(quit)
+	systray.SetContextMenu(menu)
+	systray.Show()
 
-		mStatus := ui.NewActionWithTextParent("Status: unknown", menu)
-		mStatus.SetDisabled(true)
-		menu.AddAction(mStatus)
-		mSize1 := ui.NewActionWithTextParent("", menu)
-		mSize1.SetDisabled(true)
-		menu.AddAction(mSize1)
-		mSize2 := ui.NewActionWithTextParent("", menu)
-		mSize2.SetDisabled(true)
-		menu.AddAction(mSize2)
-		menu.AddSeparator()
-		mLast := ui.NewActionWithTextParent("Last synchronized", menu)
-		smLast := ui.NewMenu()
-		mLast.SetMenu(smLast)
-		mLast.SetDisabled(true)
-		menu.AddAction(mLast)
-		menu.AddSeparator()
-		mStartStop := ui.NewActionWithTextParent("", menu)
-		mStartStop.OnTriggered(func() {
-			switch {
-			case strings.HasPrefix(mStartStop.Text(), "\u200B"):
-				go YD.Start()
-			case strings.HasPrefix(mStartStop.Text(), "\u2060"):
-				go YD.Stop()
-			}
-		})
-		menu.AddAction(mStartStop)
-		menu.AddSeparator()
-		mOutput := ui.NewActionWithTextParent("Show daemon output", menu)
-		mOutput.OnTriggered(func() { notifySend(systray, "Yandex.Disk daemon output", YD.Output()) })
-		menu.AddAction(mOutput)
-		mPath := ui.NewActionWithTextParent("Open: "+YD.Path, menu)
-		mPath.OnTriggered(func() { tools.XdgOpen(YD.Path) })
-		menu.AddAction(mPath)
-		mSite := ui.NewActionWithTextParent("Open YandexDisk in browser", menu)
-		mSite.OnTriggered(func() { tools.XdgOpen("https://disk.yandex.com") })
-		menu.AddAction(mSite)
-		menu.AddSeparator()
-		mHelp := ui.NewActionWithTextParent("Help", menu)
-		mHelp.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/YD.go/wiki/FAQ&SUPPORT") })
-		menu.AddAction(mHelp)
-		mAbout := ui.NewActionWithTextParent("About", menu)
-		mAbout.OnTriggered(func() { notifySend(systray, "About", about) })
-		menu.AddAction(mAbout)
-		mDon := ui.NewActionWithTextParent("Donations", menu)
-		mDon.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/yd-go/wiki/Donats") })
-		menu.AddAction(mDon)
-		menu.AddSeparator()
-		quit := ui.NewActionWithTextParent("Quit", menu)
-		quit.OnTriggered(func() {
-			if AppCfg["StopDaemon"].(bool) {
-				YD.Stop()
-			}
-			YD.Close() // it closes Changes channel
-			ui.QApplicationQuit()
-		})
-		menu.AddAction(quit)
-		systray.SetContextMenu(menu)
-		systray.Show()
-
-		////// ui.QApplicationPostEvent(systray, nil)
-		go func() {
-			defer os.Exit(0) // request for exit from systray main loop (gtk.main())
-			llog.Debug("Changes handler started")
-			defer llog.Debug("Changes handler exited.")
-			// Prepare the staff for icon animation
-			currentIcon := 0
-			tick := time.NewTimer(333 * time.Millisecond)
-			defer tick.Stop()
-			currentStatus := ""
-			for {
-				select {
-				case yds, ok := <-YD.Changes: // YD changed status event
-					if !ok { // as Changes channel closed - exit
-						return
-					}
-					llog.Debug("Change received")
-					currentStatus = yds.Stat
-					ui.Async(func() {
-						mStatus.SetText(Msg.Sprint("Status: ") + Msg.Sprint(yds.Stat) + " " + yds.Prog +
-							yds.Err + " " + tools.ShortName(yds.ErrP, 30))
-						mSize1.SetText(Msg.Sprintf("Used: %s/%s", yds.Used, yds.Total))
-						mSize2.SetText(Msg.Sprintf("Free: %s Trash: %s", yds.Free, yds.Trash))
-						if yds.ChLast { // last synchronized list changed
-							smLast.Clear()
-							for _, p := range yds.Last {
-								short, full := tools.ShortName(p, 40), filepath.Join(YD.Path, p)
-								action := ui.NewActionWithTextParent(short, smLast)
-								if tools.NotExists(full) {
-									action.SetDisabled(true)
-								} else {
-									action.OnTriggered(func() { tools.XdgOpen(full) })
-								}
-								smLast.AddAction(action)
+	go func() {
+		defer os.Exit(0) // request for exit from systray main loop (gtk.main())
+		llog.Debug("Changes handler started")
+		defer llog.Debug("Changes handler exited.")
+		// Prepare the staff for icon animation
+		currentIcon := 0
+		tick := time.NewTimer(333 * time.Millisecond)
+		defer tick.Stop()
+		currentStatus := ""
+		for {
+			select {
+			case yds, ok := <-YD.Changes: // YD changed status event
+				if !ok { // as Changes channel closed - exit
+					return
+				}
+				llog.Debug("Change received")
+				currentStatus = yds.Stat
+				ui.Async(func() {
+					mStatus.SetText(Msg.Sprint("Status: ") + Msg.Sprint(yds.Stat) + " " + yds.Prog +
+						yds.Err + " " + tools.ShortName(yds.ErrP, 30))
+					mSize1.SetText(Msg.Sprintf("Used: %s/%s", yds.Used, yds.Total))
+					mSize2.SetText(Msg.Sprintf("Free: %s Trash: %s", yds.Free, yds.Trash))
+					if yds.ChLast { // last synchronized list changed
+						smLast.Clear()
+						for _, p := range yds.Last {
+							short, full := tools.ShortName(p, 40), filepath.Join(YD.Path, p)
+							action := ui.NewActionWithTextParent(short, smLast)
+							if tools.NotExists(full) {
+								action.SetDisabled(true)
+							} else {
+								action.OnTriggered(func() { tools.XdgOpen(full) })
 							}
-							mLast.SetDisabled(len(yds.Last) == 0)
-							llog.Debug("Last synchronized updated L", len(yds.Last))
+							smLast.AddAction(action)
 						}
-						if yds.Stat != yds.Prev { // status changed
-							// change indicator icon
-							switch yds.Stat {
-							case "idle":
-								systray.SetIcon(iconIdle)
-							case "busy", "index":
-								systray.SetIcon(iconBusy[currentIcon])
-								if yds.Prev != "busy" && yds.Prev != "index" {
-									tick.Reset(333 * time.Millisecond)
-								}
-							case "none", "paused":
-								systray.SetIcon(iconPause)
-							default:
-								systray.SetIcon(iconError)
+						mLast.SetDisabled(len(yds.Last) == 0)
+						llog.Debug("Last synchronized updated L", len(yds.Last))
+					}
+					if yds.Stat != yds.Prev { // status changed
+						// change indicator icon
+						switch yds.Stat {
+						case "idle":
+							systray.SetIcon(iconIdle)
+						case "busy", "index":
+							systray.SetIcon(iconBusy[currentIcon])
+							if yds.Prev != "busy" && yds.Prev != "index" {
+								tick.Reset(333 * time.Millisecond)
 							}
-							// handle "Start"/"Stop" menu title and "Show daemon output" availability
-							if yds.Stat == "none" {
-								mStartStop.SetText("\u200B" + Msg.Sprint("Start daemon"))
-								mOutput.SetDisabled(true)
-							} else if yds.Prev == "none" || yds.Prev == "unknown" {
-								mStartStop.SetText("\u2060" + Msg.Sprint("Stop daemon"))
-								mOutput.SetDisabled(false)
-							}
-							// handle notifications
-							if AppCfg["Notifications"].(bool) {
-								switch {
-								case yds.Stat == "none" && yds.Prev != "unknown":
-									notifySend(
-										systray,
-										Msg.Sprint("Yandex.Disk"),
-										Msg.Sprint("Daemon stopped"))
-								case yds.Prev == "none":
-									notifySend(
-										systray,
-										Msg.Sprint("Yandex.Disk"),
-										Msg.Sprint("Daemon started"))
-								case (yds.Stat == "busy" || yds.Stat == "index") &&
-									(yds.Prev != "busy" && yds.Prev != "index"):
-									notifySend(
-										systray,
-										Msg.Sprint("Yandex.Disk"),
-										Msg.Sprint("Synchronization started"))
-								case (yds.Stat == "idle" || yds.Stat == "error") &&
-									(yds.Prev == "busy" || yds.Prev == "index"):
-									notifySend(
-										systray,
-										Msg.Sprint("Yandex.Disk"),
-										Msg.Sprint("Synchronization finished"))
-								}
+						case "none", "paused":
+							systray.SetIcon(iconPause)
+						default:
+							systray.SetIcon(iconError)
+						}
+						// handle "Start"/"Stop" menu title and "Show daemon output" availability
+						if yds.Stat == "none" {
+							mStartStop.SetText("\u200B" + Msg.Sprint("Start daemon"))
+							mOutput.SetDisabled(true)
+						} else if yds.Prev == "none" || yds.Prev == "unknown" {
+							mStartStop.SetText("\u2060" + Msg.Sprint("Stop daemon"))
+							mOutput.SetDisabled(false)
+						}
+						// handle notifications
+						if AppCfg["Notifications"].(bool) {
+							switch {
+							case yds.Stat == "none" && yds.Prev != "unknown":
+								notifySend(
+									systray,
+									Msg.Sprint("Yandex.Disk"),
+									Msg.Sprint("Daemon stopped"))
+							case yds.Prev == "none":
+								notifySend(
+									systray,
+									Msg.Sprint("Yandex.Disk"),
+									Msg.Sprint("Daemon started"))
+							case (yds.Stat == "busy" || yds.Stat == "index") &&
+								(yds.Prev != "busy" && yds.Prev != "index"):
+								notifySend(
+									systray,
+									Msg.Sprint("Yandex.Disk"),
+									Msg.Sprint("Synchronization started"))
+							case (yds.Stat == "idle" || yds.Stat == "error") &&
+								(yds.Prev == "busy" || yds.Prev == "index"):
+								notifySend(
+									systray,
+									Msg.Sprint("Yandex.Disk"),
+									Msg.Sprint("Synchronization finished"))
 							}
 						}
-						systray.Show()
-					})
-					llog.Debug("Change handled")
-				case <-tick.C: //  timer event
-					currentIcon++
-					currentIcon %= 5
-					if currentStatus == "busy" || currentStatus == "index" {
-						ui.Async(func() { systray.SetIcon(iconBusy[currentIcon]) })
-						tick.Reset(333 * time.Millisecond)
 					}
+					systray.Show()
+				})
+				llog.Debug("Change handled")
+			case <-tick.C: //  timer event
+				currentIcon++
+				currentIcon %= 5
+				if currentStatus == "busy" || currentStatus == "index" {
+					ui.Async(func() { systray.SetIcon(iconBusy[currentIcon]) })
+					tick.Reset(333 * time.Millisecond)
 				}
 			}
-		}()
-
-	})
+		}
+	}()
 }
 
 func setTheme(appHome, theme string) {
