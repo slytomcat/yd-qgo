@@ -168,7 +168,7 @@ func onStart() {
 	mAbout.OnTriggered(func() { notifySend(systray, "About", about) })
 	menu.AddAction(mAbout)
 	mDon := ui.NewActionWithTextParent("Donations", menu)
-	mDon.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/yd-go/wiki/Donats") })
+	mDon.OnTriggered(func() { tools.XdgOpen("https://github.com/slytomcat/yd-go/wiki/Donations") })
 	menu.AddAction(mDon)
 	menu.AddSeparator()
 	quit := ui.NewActionWithTextParent("Quit", menu)
