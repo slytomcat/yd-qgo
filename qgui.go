@@ -177,14 +177,13 @@ func onStart() {
 			YD.Stop()
 		}
 		YD.Close() // it closes Changes channel
-		ui.QApplicationQuit()
 	})
 	menu.AddAction(quit)
 	systray.SetContextMenu(menu)
 	systray.Show()
 
 	go func() {
-		defer os.Exit(0) // request for exit from systray main loop (gtk.main())
+		defer ui.QApplicationQuit() // request for exit from main loop
 		llog.Debug("Changes handler started")
 		defer llog.Debug("Changes handler exited.")
 		// Prepare the staff for icon animation
