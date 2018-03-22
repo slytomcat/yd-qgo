@@ -16,16 +16,11 @@ void savesigchld() {
 import "C"
 
 import (
-	"flag"
-	"fmt"
-	"log"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/slytomcat/confJSON"
 	"github.com/slytomcat/llog"
 	"github.com/slytomcat/yd-go/tools"
 	"github.com/slytomcat/ydisk"
