@@ -61,11 +61,14 @@ func onStart() {
 	// Create new ydisk interface
 	YD, err := ydisk.NewYDisk(AppCfg["Conf"].(string))
 	if err != nil {
-		llog.Critical("Fatal error. Exit.")
+		llog.Critical("Fatal error:", err)
 	}
 	// Start daemon if it is configured
 	if AppCfg["StartDaemon"].(bool) {
-		YD.Start()
+		err := YD.Start()
+		if err != nil {
+			llog.Critical("Fatal error. Exit.")
+		}
 	}
 	// Initialize icon theme
 	setTheme("/usr/share/yd-qgo/icons", AppCfg["Theme"].(string))
@@ -132,7 +135,7 @@ func onStart() {
 	systray.Show()
 
 	go func() {
-		defer ui.QApplicationQuit() // request for exit from main loop
+		defer ui.QApplicationQuit() // request for exit from main UI loop
 		llog.Debug("Changes handler started")
 		defer llog.Debug("Changes handler exited.")
 		// Prepare the staff for icon animation
@@ -223,8 +226,7 @@ func onStart() {
 				})
 				llog.Debug("Change handled")
 			case <-tick.C: //  timer event
-				currentIcon++
-				currentIcon %= 5
+				currentIcon = (currentIcon + 1) % 5
 				if currentStatus == "busy" || currentStatus == "index" {
 					ui.Async(func() { systray.SetIcon(iconBusy[currentIcon]) })
 					tick.Reset(333 * time.Millisecond)
