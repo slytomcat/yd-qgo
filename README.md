@@ -65,4 +65,4 @@ Run install.bash script with root previlegies for installation.
 		Alow debugging messages to be sent to stderr
 
 
-Note that yandex-disk CLI utility must be installed and connection to cloud disk mast be configured for usage the yd-go utility.
+Note that yandex-disk CLI utility must be installed and connection to cloud disk mast be configured for usage the yd-qgo utility.
