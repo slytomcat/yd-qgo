@@ -23,6 +23,7 @@ import (
 
 	"github.com/slytomcat/llog"
 	"github.com/slytomcat/yd-go/tools"
+	"github.com/slytomcat/yd-go/icons"
 	"github.com/slytomcat/ydisk"
 	"github.com/visualfc/goqt/ui"
 	"golang.org/x/text/message"
@@ -75,11 +76,13 @@ func onStart() {
 	if theme, ok = AppCfg["Theme"].(string); !ok {
 		llog.Critical("Config read error: Theme should be string")
 	}
+	
 	if err := icons.PrepareIcons(); err != nil {
 		llog.Critical(err)
 	}
-	setTheme(theme)
 	
+	setTheme(theme)
+
 	systray := ui.NewSystemTrayIcon()
 	systray.SetIcon(iconPause)
 	menu := ui.NewMenu()
@@ -245,18 +248,18 @@ func onStart() {
 	}()
 }
 
-func setTheme(appHome, theme string) {
-	themePath := path.Join(appHome, theme)
+func setTheme(theme string) {
+	icons.SetTheme(theme)
 	iconBusy = [5]*ui.QIcon{
-		ui.NewIconWithFilename(path.Join(themePath, "busy1.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy2.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy3.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy4.png")),
-		ui.NewIconWithFilename(path.Join(themePath, "busy5.png")),
+		ui.NewIconWithFilename(icons.IconBusy[0]),
+		ui.NewIconWithFilename(icons.IconBusy[1]),
+		ui.NewIconWithFilename(icons.IconBusy[2]),
+		ui.NewIconWithFilename(icons.IconBusy[3]),
+		ui.NewIconWithFilename(icons.IconBusy[4]),
 	}
-	iconError = ui.NewIconWithFilename(path.Join(themePath, "error.png"))
-	iconIdle = ui.NewIconWithFilename(path.Join(themePath, "idle.png"))
-	iconPause = ui.NewIconWithFilename(path.Join(themePath, "pause.png"))
+	iconError = ui.NewIconWithFilename(icons.IconError)
+	iconIdle = ui.NewIconWithFilename(icons.IconIdle)
+	iconPause = ui.NewIconWithFilename(icons.IconPause)
 }
 
 func notifySend(t *ui.QSystemTrayIcon, title, message string) {
