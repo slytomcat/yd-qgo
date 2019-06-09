@@ -57,7 +57,7 @@ func onStart() {
 	// Initialize application and receive the application configuration
 	AppCfg := tools.AppInit("yd-qgo")
 	// Initialize translations
-	Msg = message.NewPrinter(message.MatchLanguage("ru"))
+	//Msg = message.NewPrinter(message.MatchLanguage("ru"))
 	// Create new ydisk interface
 	YD, err := ydisk.NewYDisk(AppCfg["Conf"].(string))
 	if err != nil {
@@ -67,11 +67,19 @@ func onStart() {
 	if AppCfg["StartDaemon"].(bool) {
 		err := YD.Start()
 		if err != nil {
-			llog.Critical("Fatal error. Exit.")
+			llog.Critical("Fatal error:", err)
 		}
 	}
 	// Initialize icon theme
-	setTheme("/usr/share/yd-qgo/icons", AppCfg["Theme"].(string))
+	var theme string
+	if theme, ok = AppCfg["Theme"].(string); !ok {
+		llog.Critical("Config read error: Theme should be string")
+	}
+	if err := icons.PrepareIcons(); err != nil {
+		llog.Critical(err)
+	}
+	setTheme(theme)
+	
 	systray := ui.NewSystemTrayIcon()
 	systray.SetIcon(iconPause)
 	menu := ui.NewMenu()
@@ -129,6 +137,7 @@ func onStart() {
 			YD.Stop()
 		}
 		YD.Close() // it closes Changes channel
+		icons.ClearIcons()
 	})
 	menu.AddAction(quit)
 	systray.SetContextMenu(menu)
