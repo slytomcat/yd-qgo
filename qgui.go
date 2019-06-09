@@ -57,7 +57,7 @@ func onStart() {
 	// Initialize application and receive the application configuration
 	AppCfg := tools.AppInit("yd-qgo")
 	// Initialize translations
-	//Msg = message.NewPrinter(message.MatchLanguage("ru"))
+	Msg = message.NewPrinter(message.MatchLanguage("ru"))
 	// Create new ydisk interface
 	YD, err := ydisk.NewYDisk(AppCfg["Conf"].(string))
 	if err != nil {
