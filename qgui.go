@@ -13,17 +13,16 @@ void savesigchld() {
 	sigaction(SIGCHLD, &action, &old_action);
 }
 */
-import "C"
+//import "C"
 
 import (
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/slytomcat/llog"
-	"github.com/slytomcat/yd-go/tools"
 	"github.com/slytomcat/yd-go/icons"
+	"github.com/slytomcat/yd-go/tools"
 	"github.com/slytomcat/ydisk"
 	"github.com/visualfc/goqt/ui"
 	"golang.org/x/text/message"
@@ -54,7 +53,7 @@ func main() {
 }
 
 func onStart() {
-	C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
+	//C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
 	// Initialize application and receive the application configuration
 	AppCfg := tools.AppInit("yd-qgo")
 	// Initialize translations
@@ -72,15 +71,15 @@ func onStart() {
 		}
 	}
 	// Initialize icon theme
-	var theme string
-	if theme, ok = AppCfg["Theme"].(string); !ok {
+	theme, ok := AppCfg["Theme"].(string)
+	if !ok {
 		llog.Critical("Config read error: Theme should be string")
 	}
-	
+
 	if err := icons.PrepareIcons(); err != nil {
 		llog.Critical(err)
 	}
-	
+
 	setTheme(theme)
 
 	systray := ui.NewSystemTrayIcon()

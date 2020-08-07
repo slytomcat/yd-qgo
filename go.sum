@@ -1,3 +1,4 @@
+github.com/cratonica/2goarray v0.0.0-20190331194516-514510793eaa/go.mod h1:6Arca19mRx58CA7OWEd7Wu1NpC1rd3uDnNs6s1pj/DI=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
@@ -10,6 +11,8 @@ github.com/slytomcat/systray v0.0.0-20180108174847-6a5d57e284c5/go.mod h1:kkwijn
 github.com/slytomcat/yandex-disk-simulator v0.0.0-20190202171116-4b3395ddd90b/go.mod h1:zJUnT5tjPX5QDe/EC8s4CbACbY5InPwhrddR3mExF+s=
 github.com/slytomcat/yd-go v0.0.0-20190609110442-1fbc75e74d1e h1:In5gn1eBPsePSNbmR4mYlL9nvJSFMeVoOcKCvWAcefA=
 github.com/slytomcat/yd-go v0.0.0-20190609110442-1fbc75e74d1e/go.mod h1:Q3boiFyaHdxLyyBgm2yGmzG4nII5/PeprUCR4x+Vw/E=
+github.com/slytomcat/yd-go v0.0.0-20191004165337-672161625411 h1:H4lh29bSsVkZjUZoKedOQkYWJOijuxusFfFzV4Ve35g=
+github.com/slytomcat/yd-go v0.0.0-20191004165337-672161625411/go.mod h1:c1HjOmJAaWB8q6zHxnIw2rNOo002Nc7u4qv3jkNxljc=
 github.com/slytomcat/ydisk v0.0.0-20190204161635-18d7bea467b6/go.mod h1:JNROsdmw1xqYbJGmm4LnsqIjqur4Yz9lAGI/rb+s1lU=
 github.com/slytomcat/ydisk v0.0.0-20190609110909-538df92a2e20 h1:pAcIJREskj9pLHwuZtk28IR/o5fbwHKIPMwZPFL0GMM=
 github.com/slytomcat/ydisk v0.0.0-20190609110909-538df92a2e20/go.mod h1:ZFrcsK6iac0nyLPhMp0YMng2hfdkK0XRRBjn/ShvB8Q=
