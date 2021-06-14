@@ -13,7 +13,7 @@ void savesigchld() {
 	sigaction(SIGCHLD, &action, &old_action);
 }
 */
-import "C"
+//import "C"
 
 import (
 	"path/filepath"
@@ -53,7 +53,7 @@ func main() {
 }
 
 func onStart() {
-	C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
+	//C.savesigchld() // temporary fix for https://github.com/visualfc/goqt/issues/52
 	// Initialize application and receive the application configuration
 	AppCfg := tools.AppInit("yd-qgo")
 	// Initialize translations
