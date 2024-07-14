@@ -1,4 +1,7 @@
-# yd-qgo
+# yd-qgo (ARCHIVED)
+
+# NOTE: due to swich to use B-BUS for GUI implementation into [yd-go](https://github.com/slytomcat/yd-go) project this project was archived. D-BUS version of yd-go works with QT as well with other GUI libraties into various Desktop Environments. So the special QT version is not needed any more. 
+
 ## Panel indicator for Yandex-disk CLI daemon (linux/Qt)
 
 It's just reface (Qt is used instead of GTK+) of yd-go. If you are interested in GTK+ version, visit: https://github.com/slytomcat/yd-go
